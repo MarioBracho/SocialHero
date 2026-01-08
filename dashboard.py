@@ -24,14 +24,22 @@ def check_password():
     if "authenticated" in st.session_state and st.session_state.authenticated:
         return True
 
-    # Načtení credentials ze secrets nebo výchozí
-    try:
-        correct_username = st.secrets["passwords"]["username"]
-        correct_password = st.secrets["passwords"]["password"]
-    except:
-        # Fallback pro lokální development
-        correct_username = "amity"
-        correct_password = "demo123"
+    # Načtení credentials - podporuje Streamlit Cloud i Railway
+    import os
+
+    # Zkusit načíst z Railway environment variables (priorita)
+    correct_username = os.getenv("DASHBOARD_USERNAME")
+    correct_password = os.getenv("DASHBOARD_PASSWORD")
+
+    # Pokud nejsou v ENV, zkusit Streamlit secrets
+    if not correct_username or not correct_password:
+        try:
+            correct_username = st.secrets["passwords"]["username"]
+            correct_password = st.secrets["passwords"]["password"]
+        except:
+            # Fallback pro lokální development
+            correct_username = "amity"
+            correct_password = "demo123"
 
     # Přihlašovací formulář
     st.markdown("""
