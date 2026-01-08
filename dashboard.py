@@ -474,9 +474,15 @@ st.markdown('<div class="subtitle">social hero</div>', unsafe_allow_html=True)
 
 # Sidebar - s Amity logem
 with st.sidebar:
-    # Logo Amity
-    logo_path = "/home/mariobracho/influencer/printscreens/Amity Hlavní jpg.jpg"
-    st.image(logo_path, use_column_width=True)
+    # Logo Amity - relativní cesta pro Streamlit Cloud
+    logo_path = Path(__file__).parent / "printscreens" / "Amity Hlavní jpg.jpg"
+
+    # Zobrazit logo jen pokud existuje
+    if logo_path.exists():
+        st.image(str(logo_path), use_column_width=True)
+    else:
+        # Fallback - ikona místo loga
+        st.markdown('<div style="text-align: center; font-size: 4rem;">🍹</div>', unsafe_allow_html=True)
 
     st.markdown("""
         <div style='text-align: center; padding: 1rem 0 1rem 0; border-bottom: 1px solid #E8E8E8;'>
