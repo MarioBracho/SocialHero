@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Sensitive data - NIKDY NECOMMITOVAT!
+.env
+config/.env
+*.env
+.streamlit/secrets.toml
+secrets.toml
+
+# Data a databáze
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logy
+logs/
+*.log
+
+# Reporty
+reports/
+
+# Excel soubory s daty
+Influencer boss/influencers_master.xlsx
+influencers_master.xlsx
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Zone.Identifier
+*.Zone.Identifier
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Backup
+*.bak
+*.backup
