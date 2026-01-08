@@ -104,7 +104,7 @@ import time
 # Přidání src do path
 sys.path.append(str(Path(__file__).parent))
 
-from src.database.db_manager import DatabaseManager
+from src.database.postgres_manager import UniversalDatabaseManager
 from src.utils.config import Config
 from src.reporting.excel_report import ExcelReporter
 import streamlit.components.v1 as components
@@ -472,7 +472,7 @@ st.markdown(f'<style data-version="{css_version}">' + """
 # Inicializace databáze
 @st.cache_resource
 def get_db():
-    return DatabaseManager()
+    return UniversalDatabaseManager()
 
 db = get_db()
 
