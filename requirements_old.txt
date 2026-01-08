@@ -1,0 +1,38 @@
+# ============================================
+# AMITY DRINKS - Influencer Monitor
+# Python Dependencies
+# ============================================
+
+# API komunikace
+requests==2.31.0
+facebook-sdk==3.1.0
+
+# Data processing
+pandas==2.1.4
+openpyxl==3.1.2
+xlsxwriter==3.1.9
+python-dateutil==2.8.2
+
+# Web dashboard
+streamlit==1.29.0
+plotly==5.18.0
+
+# Scheduling
+schedule==1.2.0
+APScheduler==3.10.4
+
+# Notifikace
+python-dotenv==1.0.0
+plyer==2.1.0
+
+# Utilities
+pytz==2023.3
+watchdog==3.0.0
+colorama==0.4.6
+
+# Reporting
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Optional
+# slack-sdk==3.26.1
