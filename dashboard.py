@@ -689,6 +689,153 @@ Systém automaticky přiřadí příspěvek!
 
     st.markdown("---")
 
+    # ==========================================
+    # ADMIN PANEL - Správa Influencerů
+    # ==========================================
+    st.markdown("### ⚙️ Admin Panel")
+
+    with st.expander("➕ Přidat Influencera", expanded=False):
+        with st.form("add_influencer_form", clear_on_submit=True):
+            st.markdown("**Nový influencer**")
+
+            new_name = st.text_input("Jméno *", placeholder="Jana Nováková")
+            new_instagram = st.text_input("Instagram handle", placeholder="@jana.novakova")
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                new_stories = st.number_input("Stories/měsíc", min_value=0, value=4, step=1)
+            with col2:
+                new_posts = st.number_input("Posty/měsíc", min_value=0, value=1, step=1)
+            with col3:
+                new_reels = st.number_input("Reels/měsíc", min_value=0, value=0, step=1)
+
+            new_email = st.text_input("Email", placeholder="jana@email.cz")
+            new_notes = st.text_area("Poznámky", placeholder="Volitelné poznámky...", height=60)
+
+            add_submit = st.form_submit_button("✅ Přidat influencera", use_container_width=True)
+
+            if add_submit and new_name:
+                db.connect()
+                influencer_data = {
+                    'jmeno': new_name,
+                    'instagram_handle': new_instagram if new_instagram else '',
+                    'facebook_handle': '',
+                    'tiktok_handle': '',
+                    'stories_mesic': new_stories,
+                    'prispevky_mesic': new_posts,
+                    'reels_mesic': new_reels,
+                    'email': new_email if new_email else '',
+                    'datum_zacatku': datetime.now().strftime('%Y-%m-%d'),
+                    'poznamky': new_notes if new_notes else '',
+                    'aktivni': 'ano'
+                }
+                try:
+                    influencer_id = db.add_influencer(influencer_data)
+                    db.close()
+                    st.success(f"✅ Influencer {new_name} přidán!")
+                    st.cache_data.clear()
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    db.close()
+                    st.error(f"❌ Chyba: {str(e)}")
+            elif add_submit:
+                st.warning("⚠️ Vyplňte alespoň jméno!")
+
+    with st.expander("✏️ Editovat Influencera", expanded=False):
+        db.connect()
+        all_influencers = db.get_all_influencers(active_only=False)
+        db.close()
+
+        if all_influencers:
+            inf_names = {inf['jmeno']: inf for inf in all_influencers}
+            selected_inf_name = st.selectbox(
+                "Vyberte influencera",
+                options=list(inf_names.keys()),
+                key="edit_influencer_select"
+            )
+
+            if selected_inf_name:
+                selected_inf = inf_names[selected_inf_name]
+
+                with st.form("edit_influencer_form"):
+                    edit_name = st.text_input("Jméno", value=selected_inf['jmeno'])
+                    edit_instagram = st.text_input("Instagram handle", value=selected_inf.get('instagram_handle', ''))
+
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        edit_stories = st.number_input("Stories/měsíc", min_value=0, value=selected_inf.get('stories_mesic', 0), step=1)
+                    with col2:
+                        edit_posts = st.number_input("Posty/měsíc", min_value=0, value=selected_inf.get('prispevky_mesic', 0), step=1)
+                    with col3:
+                        edit_reels = st.number_input("Reels/měsíc", min_value=0, value=selected_inf.get('reels_mesic', 0), step=1)
+
+                    edit_email = st.text_input("Email", value=selected_inf.get('email', ''))
+                    edit_active = st.checkbox("Aktivní", value=selected_inf.get('aktivni', 'ano') == 'ano')
+
+                    col_save, col_delete = st.columns(2)
+                    with col_save:
+                        save_submit = st.form_submit_button("💾 Uložit změny", use_container_width=True)
+                    with col_delete:
+                        delete_submit = st.form_submit_button("🗑️ Smazat", use_container_width=True, type="secondary")
+
+                    if save_submit:
+                        db.connect()
+                        update_data = {
+                            'jmeno': edit_name,
+                            'instagram_handle': edit_instagram,
+                            'stories_mesic': edit_stories,
+                            'prispevky_mesic': edit_posts,
+                            'reels_mesic': edit_reels,
+                            'email': edit_email,
+                            'aktivni': 'ano' if edit_active else 'ne'
+                        }
+                        try:
+                            db.update_influencer(selected_inf['id'], update_data)
+                            db.close()
+                            st.success(f"✅ {edit_name} aktualizován!")
+                            st.cache_data.clear()
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            db.close()
+                            st.error(f"❌ Chyba: {str(e)}")
+
+                    if delete_submit:
+                        db.connect()
+                        try:
+                            # Soft delete - nastavíme jako neaktivního
+                            db.update_influencer(selected_inf['id'], {'aktivni': 'ne'})
+                            db.close()
+                            st.success(f"✅ {selected_inf['jmeno']} deaktivován!")
+                            st.cache_data.clear()
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            db.close()
+                            st.error(f"❌ Chyba: {str(e)}")
+        else:
+            st.info("Zatím žádní influenceři v databázi")
+
+    with st.expander("📋 Seznam Influencerů", expanded=False):
+        db.connect()
+        all_inf = db.get_all_influencers(active_only=False)
+        db.close()
+
+        if all_inf:
+            for inf in all_inf:
+                status_emoji = "✅" if inf.get('aktivni', 'ano') == 'ano' else "❌"
+                st.markdown(f"""
+                    **{status_emoji} {inf['jmeno']}**
+                    Stories: {inf.get('stories_mesic', 0)} | Posts: {inf.get('prispevky_mesic', 0)} | Reels: {inf.get('reels_mesic', 0)}
+                """)
+                st.markdown("---")
+            st.info(f"**Celkem:** {len(all_inf)} influencerů")
+        else:
+            st.info("Zatím žádní influenceři")
+
+    st.markdown("---")
+
     # Logout tlačítko
     if st.button("🚪 Odhlásit se", use_container_width=True, key="logout_btn"):
         st.session_state.authenticated = False
