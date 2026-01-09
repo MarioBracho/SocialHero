@@ -817,6 +817,74 @@ Systém automaticky přiřadí příspěvek!
         else:
             st.info("Zatím žádní influenceři v databázi")
 
+    with st.expander("➕ Přidat Příspěvek Manuálně", expanded=False):
+        st.markdown("**Ručně přidat story/post/reel influencera**")
+
+        db.connect()
+        all_inf = db.get_all_influencers(active_only=True)
+        db.close()
+
+        if all_inf:
+            with st.form("add_post_form"):
+                # Výběr influencera
+                inf_names = {f"{inf['jmeno']} (@{inf.get('instagram_handle', 'N/A')})": inf['id'] for inf in all_inf}
+                selected_inf = st.selectbox("Influencer", options=list(inf_names.keys()))
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    post_type = st.selectbox("Typ", options=["story", "post", "reel"])
+                with col2:
+                    post_date = st.date_input("Datum", value=datetime.now())
+
+                col3, col4, col5 = st.columns(3)
+                with col3:
+                    likes = st.number_input("Likes", min_value=0, value=0, step=1)
+                with col4:
+                    comments = st.number_input("Komentáře", min_value=0, value=0, step=1)
+                with col5:
+                    reach = st.number_input("Reach", min_value=0, value=0, step=1)
+
+                post_url = st.text_input("URL příspěvku (volitelné)", placeholder="https://instagram.com/p/...")
+                caption = st.text_area("Popis (volitelné)", placeholder="Text příspěvku...", height=60)
+
+                submit_post = st.form_submit_button("✅ Přidat příspěvek", use_container_width=True)
+
+                if submit_post and selected_inf:
+                    influencer_id = inf_names[selected_inf]
+
+                    db.connect()
+                    post_data = {
+                        'influencer_id': influencer_id,
+                        'platform': 'instagram',
+                        'post_type': post_type,
+                        'post_id': f"manual_{int(datetime.now().timestamp())}",
+                        'post_url': post_url if post_url else '',
+                        'caption': caption if caption else '',
+                        'timestamp': datetime.combine(post_date, datetime.min.time()).strftime('%Y-%m-%d %H:%M:%S'),
+                        'likes': likes,
+                        'comments': comments,
+                        'reach': reach,
+                        'impressions': 0,
+                        'engagement_rate': 0
+                    }
+
+                    try:
+                        post_id = db.add_post(post_data)
+
+                        # Aktualizovat měsíční statistiky
+                        db.update_monthly_stats(influencer_id, post_date.year, post_date.month)
+
+                        db.close()
+                        st.success(f"✅ {post_type.upper()} přidán!")
+                        st.cache_data.clear()
+                        time.sleep(1)
+                        st.rerun()
+                    except Exception as e:
+                        db.close()
+                        st.error(f"❌ Chyba: {str(e)}")
+        else:
+            st.info("Nejdřív přidejte influencery")
+
     with st.expander("📋 Seznam Influencerů", expanded=False):
         db.connect()
         all_inf = db.get_all_influencers(active_only=False)
@@ -866,25 +934,48 @@ Systém automaticky přiřadí příspěvek!
                         from src.api.meta_api import MetaAPIClient
                         client = MetaAPIClient()
 
-                        # Stáhnout media z posledního měsíce
+                        # 1. Stáhnout běžné media (posty, reely)
                         from datetime import timedelta
                         since = datetime.now() - timedelta(days=30)
                         media = client.get_instagram_media(limit=50, since=since)
 
-                        if media:
-                            st.success(f"✅ Nalezeno {len(media)} příspěvků!")
+                        # 2. Zkusit stáhnout stories (dostupné jen 24h)
+                        stories = client.get_instagram_stories()
 
-                            # Zobrazit náhled
-                            for post in media[:3]:
-                                st.markdown(f"""
-                                    **{post.get('media_type', 'POST')}** - {post.get('timestamp', '')[:10]}
-                                    Likes: {post.get('like_count', 0)} | Comments: {post.get('comments_count', 0)}
-                                """)
-                                st.markdown("---")
+                        # 3. Zobrazit výsledky
+                        total_found = len(media) + len(stories)
+
+                        if total_found > 0:
+                            st.success(f"✅ Nalezeno celkem {total_found} položek!")
+
+                            if media:
+                                st.info(f"📱 Posts/Reels: {len(media)}")
+                                for post in media[:3]:
+                                    st.markdown(f"""
+                                        **{post.get('media_type', 'POST')}** - {post.get('timestamp', '')[:10]}
+                                        Likes: {post.get('like_count', 0)} | Comments: {post.get('comments_count', 0)}
+                                    """)
+                                    st.markdown("---")
+
+                            if stories:
+                                st.info(f"📸 Stories: {len(stories)}")
+                                for story in stories[:3]:
+                                    st.markdown(f"""
+                                        **STORY** - {story.get('timestamp', '')[:10]}
+                                        Owner: {story.get('username', 'N/A')}
+                                    """)
+                                    st.markdown("---")
                         else:
                             st.warning("⚠️ Žádná data nenalezena")
+                            st.info("""
+                                **Možné důvody:**
+                                - Stories jsou dostupné jen 24 hodin přes API
+                                - Tagged stories vyžadují speciální permissions
+                                - Přesdílená story možná není ve vašem media feedu
+                            """)
                     except Exception as e:
                         st.error(f"❌ Chyba: {str(e)}")
+                        st.code(str(e))
 
         st.markdown("---")
         st.info("💡 **Tip:** Test API zkontroluje připojení k Instagramu a Facebooku. Synchronizace stáhne poslední příspěvky.")
