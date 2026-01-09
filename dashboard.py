@@ -834,6 +834,61 @@ Systém automaticky přiřadí příspěvek!
         else:
             st.info("Zatím žádní influenceři")
 
+    with st.expander("🔌 Meta API & Synchronizace", expanded=False):
+        st.markdown("**Testování a synchronizace Instagram/Facebook dat**")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("🧪 Test Meta API", use_container_width=True):
+                with st.spinner("Testuji připojení k Meta API..."):
+                    try:
+                        from src.api.meta_api import MetaAPIClient
+                        client = MetaAPIClient()
+
+                        # Test připojení
+                        if client.test_connection():
+                            st.success("✅ Meta API funguje správně!")
+
+                            # Zobrazit info o tokenu
+                            token_info = client.check_token_validity()
+                            if token_info:
+                                st.info(f"Token platný: {token_info.get('is_valid', False)}")
+                        else:
+                            st.error("❌ Meta API test selhal. Zkontrolujte credentials v Railway.")
+                    except Exception as e:
+                        st.error(f"❌ Chyba: {str(e)}")
+
+        with col2:
+            if st.button("🔄 Synchronizovat Instagram", use_container_width=True):
+                with st.spinner("Stahuji data z Instagramu..."):
+                    try:
+                        from src.api.meta_api import MetaAPIClient
+                        client = MetaAPIClient()
+
+                        # Stáhnout media z posledního měsíce
+                        from datetime import timedelta
+                        since = datetime.now() - timedelta(days=30)
+                        media = client.get_instagram_media(limit=50, since=since)
+
+                        if media:
+                            st.success(f"✅ Nalezeno {len(media)} příspěvků!")
+
+                            # Zobrazit náhled
+                            for post in media[:3]:
+                                st.markdown(f"""
+                                    **{post.get('media_type', 'POST')}** - {post.get('timestamp', '')[:10]}
+                                    Likes: {post.get('like_count', 0)} | Comments: {post.get('comments_count', 0)}
+                                """)
+                                st.markdown("---")
+                        else:
+                            st.warning("⚠️ Žádná data nenalezena")
+                    except Exception as e:
+                        st.error(f"❌ Chyba: {str(e)}")
+
+        st.markdown("---")
+        st.info("💡 **Tip:** Test API zkontroluje připojení k Instagramu a Facebooku. Synchronizace stáhne poslední příspěvky.")
+
     st.markdown("---")
 
     # Logout tlačítko
