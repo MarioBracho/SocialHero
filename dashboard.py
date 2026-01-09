@@ -840,7 +840,7 @@ Systém automaticky přiřadí příspěvek!
         col1, col2 = st.columns(2)
 
         with col1:
-            if st.button("🧪 Test Meta API", use_container_width=True):
+            if st.button("🧪 Test Meta API", use_container_width=True, key="test_meta_api_btn"):
                 with st.spinner("Testuji připojení k Meta API..."):
                     try:
                         from src.api.meta_api import MetaAPIClient
@@ -860,7 +860,7 @@ Systém automaticky přiřadí příspěvek!
                         st.error(f"❌ Chyba: {str(e)}")
 
         with col2:
-            if st.button("🔄 Synchronizovat Instagram", use_container_width=True):
+            if st.button("🔄 Synchronizovat Instagram", use_container_width=True, key="sync_instagram_btn"):
                 with st.spinner("Stahuji data z Instagramu..."):
                     try:
                         from src.api.meta_api import MetaAPIClient
