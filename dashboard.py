@@ -931,50 +931,69 @@ Systém automaticky přiřadí příspěvek!
             if st.button("🔄 Synchronizovat Instagram", use_container_width=True, key="sync_instagram_btn"):
                 with st.spinner("Stahuji data z Instagramu..."):
                     try:
-                        from src.api.meta_api import MetaAPIClient
-                        client = MetaAPIClient()
+                        from src.monitoring.sync_instagram import InstagramSync
 
-                        # 1. Stáhnout běžné media (posty, reely)
-                        from datetime import timedelta
-                        since = datetime.now() - timedelta(days=30)
-                        media = client.get_instagram_media(limit=50, since=since)
+                        # Spustit plnou synchronizaci
+                        sync = InstagramSync()
+                        sync.sync(days_back=7)
 
-                        # 2. Zkusit stáhnout stories (dostupné jen 24h)
-                        stories = client.get_instagram_stories()
+                        # Zobrazit výsledky
+                        st.success("✅ Synchronizace dokončena!")
 
-                        # 3. Zobrazit výsledky
-                        total_found = len(media) + len(stories)
+                        # Zobrazit statistiky
+                        db.connect()
+                        cursor = db.connection.cursor()
 
-                        if total_found > 0:
-                            st.success(f"✅ Nalezeno celkem {total_found} položek!")
-
-                            if media:
-                                st.info(f"📱 Posts/Reels: {len(media)}")
-                                for post in media[:3]:
-                                    st.markdown(f"""
-                                        **{post.get('media_type', 'POST')}** - {post.get('timestamp', '')[:10]}
-                                        Likes: {post.get('like_count', 0)} | Comments: {post.get('comments_count', 0)}
-                                    """)
-                                    st.markdown("---")
-
-                            if stories:
-                                st.info(f"📸 Stories: {len(stories)}")
-                                for story in stories[:3]:
-                                    st.markdown(f"""
-                                        **STORY** - {story.get('timestamp', '')[:10]}
-                                        Owner: {story.get('username', 'N/A')}
-                                    """)
-                                    st.markdown("---")
-                        else:
-                            st.warning("⚠️ Žádná data nenalezena")
-                            st.info("""
-                                **Možné důvody:**
-                                - Stories jsou dostupné jen 24 hodin přes API
-                                - Tagged stories vyžadují speciální permissions
-                                - Přesdílená story možná není ve vašem media feedu
+                        # Kolik postů bylo přidáno za poslední hodinu
+                        if db.is_postgres:
+                            cursor.execute("""
+                                SELECT COUNT(*) as count,
+                                       SUM(CASE WHEN creator_id IS NOT NULL THEN 1 ELSE 0 END) as matched,
+                                       SUM(CASE WHEN creator_id IS NULL THEN 1 ELSE 0 END) as unmatched
+                                FROM posts
+                                WHERE created_at > NOW() - INTERVAL '1 hour'
                             """)
+                        else:
+                            cursor.execute("""
+                                SELECT COUNT(*) as count,
+                                       SUM(CASE WHEN creator_id IS NOT NULL THEN 1 ELSE 0 END) as matched,
+                                       SUM(CASE WHEN creator_id IS NULL THEN 1 ELSE 0 END) as unmatched
+                                FROM posts
+                                WHERE created_at > datetime('now', '-1 hour')
+                            """)
+
+                        result = cursor.fetchone()
+                        db.close()
+
+                        if result:
+                            r = dict(result)
+                            total = r.get('count', 0)
+                            matched = r.get('matched', 0)
+                            unmatched = r.get('unmatched', 0)
+
+                            col_a, col_b, col_c = st.columns(3)
+                            with col_a:
+                                st.metric("📊 Nových příspěvků", total)
+                            with col_b:
+                                st.metric("✅ Přiřazeno", matched)
+                            with col_c:
+                                st.metric("❓ Neznámí", unmatched)
+
+                            if unmatched > 0:
+                                st.info(f"💡 {unmatched} neznámých influencerů - podívejte se do sekce 'Neznámí Influenceři'")
+
+                        st.info("""
+                            **Synchronizace používá:**
+                            1. Tagged posts API (po App Review)
+                            2. Stories s tagged users
+                            3. Caption regex fallback (@mentions)
+                        """)
+
+                        # Refresh stránky aby se data zobrazila
+                        st.cache_data.clear()
+
                     except Exception as e:
-                        st.error(f"❌ Chyba: {str(e)}")
+                        st.error(f"❌ Chyba při synchronizaci: {str(e)}")
                         st.code(str(e))
 
         st.markdown("---")

@@ -87,10 +87,7 @@ class InstagramSync:
                 influencer = self.db.get_influencer_by_instagram_handle(creator_username)
 
                 if not influencer:
-                    api_logger.warning(f"❓ Neznámý influencer: @{creator_username}")
-                    # Uložit i bez creator_id (pro "pending" review)
-                    self._save_post_with_creator(post, None, creator_username, 'api_tags')
-                    processed += 1
+                    api_logger.info(f"ℹ️  Přeskakuji @{creator_username} (není v databázi)")
                     continue
 
                 # Uložit s plným creator info
@@ -140,11 +137,10 @@ class InstagramSync:
                     influencer = self.db.get_influencer_by_instagram_handle(username)
 
                     if not influencer:
-                        api_logger.warning(f"❓ Neznámý influencer: @{username}")
-                        self._save_post_with_creator(story, None, username, 'api_stories')
-                    else:
-                        self._save_post_with_creator(story, influencer, username, 'api_stories')
+                        api_logger.info(f"ℹ️  Přeskakuji @{username} (není v databázi)")
+                        continue
 
+                    self._save_post_with_creator(story, influencer, username, 'api_stories')
                     processed += 1
 
             return processed
@@ -336,13 +332,11 @@ class InstagramSync:
             influencer = self.db.get_influencer_by_instagram_handle(username)
 
             if not influencer:
-                api_logger.warning(f"❓ Unknown influencer: @{username}")
-                # Save without creator_id (pending review)
-                self._save_post_with_creator(media, None, username, 'webhook')
-            else:
-                # Save with full creator info
-                self._save_post_with_creator(media, influencer, username, 'webhook')
+                api_logger.info(f"ℹ️  Přeskakuji webhook od @{username} (není v databázi)")
+                return
 
+            # Save with full creator info
+            self._save_post_with_creator(media, influencer, username, 'webhook')
             api_logger.info(f"✅ Webhook mention processed: @{username}")
 
         except Exception as e:
