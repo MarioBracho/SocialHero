@@ -106,7 +106,11 @@ class UniversalDatabaseManager:
                     impressions INTEGER DEFAULT 0,
                     engagement_rate REAL DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    creator_username TEXT,
+                    creator_id INTEGER,
+                    detection_method TEXT,
                     FOREIGN KEY (influencer_id) REFERENCES influencers (id),
+                    FOREIGN KEY (creator_id) REFERENCES influencers (id),
                     UNIQUE (post_id, platform)
                 )
             ''')
@@ -167,7 +171,11 @@ class UniversalDatabaseManager:
                     impressions INTEGER DEFAULT 0,
                     engagement_rate REAL DEFAULT 0,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    creator_username TEXT,
+                    creator_id INTEGER,
+                    detection_method TEXT,
                     FOREIGN KEY (influencer_id) REFERENCES influencers (id),
+                    FOREIGN KEY (creator_id) REFERENCES influencers (id),
                     UNIQUE (post_id, platform)
                 )
             ''')
@@ -317,6 +325,92 @@ class UniversalDatabaseManager:
         except Exception as e:
             print(f"Error adding post: {e}")
             return None
+
+    def add_post_with_creator(self, data: Dict) -> Optional[int]:
+        """
+        Přidá nový příspěvek včetně creator info (pro automatickou detekci)
+
+        Args:
+            data: Dictionary s daty o příspěvku, včetně:
+                - creator_username: Instagram @handle autora
+                - creator_id: ID influencera (nebo None pokud neznámý)
+                - detection_method: 'webhook', 'api_tags', 'api_stories', 'caption_regex'
+                ... + standardní fieldy z add_post
+
+        Returns:
+            ID nově vytvořeného příspěvku nebo None při chybě
+        """
+        cursor = self.connection.cursor()
+
+        try:
+            if self.is_postgres:
+                cursor.execute('''
+                    INSERT INTO posts (
+                        influencer_id, platform, post_type, post_id, post_url,
+                        caption, timestamp, likes, comments, shares, reach,
+                        impressions, engagement_rate,
+                        creator_username, creator_id, detection_method
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (post_id, platform) DO NOTHING
+                    RETURNING id
+                ''', (
+                    data['influencer_id'], data['platform'], data['post_type'],
+                    data['post_id'], data.get('post_url', ''), data.get('caption', ''),
+                    data['timestamp'], data.get('likes', 0), data.get('comments', 0),
+                    data.get('shares', 0), data.get('reach', 0),
+                    data.get('impressions', 0), data.get('engagement_rate', 0),
+                    data.get('creator_username'), data.get('creator_id'),
+                    data.get('detection_method', 'unknown')
+                ))
+                result = cursor.fetchone()
+                post_id = result['id'] if result else None
+            else:
+                cursor.execute('''
+                    INSERT OR IGNORE INTO posts (
+                        influencer_id, platform, post_type, post_id, post_url,
+                        caption, timestamp, likes, comments, shares, reach,
+                        impressions, engagement_rate,
+                        creator_username, creator_id, detection_method
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    data['influencer_id'], data['platform'], data['post_type'],
+                    data['post_id'], data.get('post_url', ''), data.get('caption', ''),
+                    data['timestamp'], data.get('likes', 0), data.get('comments', 0),
+                    data.get('shares', 0), data.get('reach', 0),
+                    data.get('impressions', 0), data.get('engagement_rate', 0),
+                    data.get('creator_username'), data.get('creator_id'),
+                    data.get('detection_method', 'unknown')
+                ))
+                post_id = cursor.lastrowid if cursor.lastrowid > 0 else None
+
+            self.connection.commit()
+            return post_id
+        except Exception as e:
+            print(f"Error adding post with creator: {e}")
+            return None
+
+    def get_influencer_by_instagram_handle(self, handle: str) -> Optional[Dict]:
+        """
+        Najde influencera podle Instagram handle
+
+        Args:
+            handle: Instagram handle (@dustyfeet_23 nebo dustyfeet_23)
+
+        Returns:
+            Dictionary s daty o influencerovi nebo None pokud nenalezen
+        """
+        cursor = self.connection.cursor()
+        placeholder = '%s' if self.is_postgres else '?'
+
+        # Odstranit @ pokud je v handle a normalizovat na lowercase
+        clean_handle = handle.lstrip('@').lower()
+
+        cursor.execute(
+            f"SELECT * FROM influencers WHERE LOWER(instagram_handle) = {placeholder}",
+            (clean_handle,)
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
     def get_posts_by_month(self, year: int, month: int) -> List[Dict]:
         """Vrátí příspěvky za daný měsíc"""
