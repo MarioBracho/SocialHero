@@ -141,18 +141,18 @@ class MetaAPIClient:
         """
         Získá příspěvky, ve kterých byl účet označen (tagged)
 
-        POZNÁMKA: Endpoint /tags vyžaduje speciální oprávnění, která musí schválit Meta.
-        Alternativa: použít get_instagram_hashtag_search() nebo get_instagram_mentions()
+        POZNÁMKA: Endpoint /tags vyžaduje speciální oprávnění (Meta App Review).
+        Po schválení vrací username autora pro automatickou detekci.
 
         Args:
             limit: Maximální počet příspěvků
 
         Returns:
-            Seznam tagovaných příspěvků
+            Seznam tagovaných příspěvků včetně username a insights
         """
         url = f"{self.base_url}/{self.ig_account_id}/tags"
         params = {
-            'fields': 'id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count,username',
+            'fields': 'id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count,username,owner',
             'limit': limit
         }
 
@@ -162,6 +162,16 @@ class MetaAPIClient:
         if data and 'data' in data:
             tags = data['data']
             api_logger.info(f"Nalezeno {len(tags)} Instagram tagů")
+
+            # Enrich každý tag s insights (reach, impressions)
+            for tag in tags:
+                media_id = tag.get('id')
+                if media_id:
+                    insights = self.get_instagram_insights(media_id)
+                    if insights:
+                        tag['reach'] = insights.get('reach', 0)
+                        tag['impressions'] = insights.get('impressions', 0)
+
             return tags
 
         return []
@@ -225,6 +235,9 @@ class MetaAPIClient:
         """
         Získá aktivní Instagram stories
 
+        NOVĚ: Pokusí se pro každou story získat tagged users
+        (vyžaduje App Review pro plný přístup)
+
         Note: Stories jsou dostupné pouze 24 hodin
         """
         url = f"{self.base_url}/{self.ig_account_id}/stories"
@@ -237,9 +250,43 @@ class MetaAPIClient:
 
         if data and 'data' in data:
             stories = data['data']
+
+            # Pro každou story zkus získat tagged users
+            for story in stories:
+                story_id = story.get('id')
+                if story_id:
+                    tagged = self._get_story_tagged_users(story_id)
+                    story['tagged_users'] = tagged
+
             api_logger.info(f"Nalezeno {len(stories)} aktivních stories")
             return stories
 
+        return []
+
+    def _get_story_tagged_users(self, story_id: str) -> List[str]:
+        """
+        Pokusí se získat seznam tagged users ze story
+
+        Args:
+            story_id: ID story
+
+        Returns:
+            List of usernames: ['dustyfeet_23', ...] nebo [] pokud nedostupné
+        """
+        url = f"{self.base_url}/{story_id}"
+        params = {
+            'fields': 'id,tagged_users.username'
+        }
+
+        data = self._make_request(url, params)
+
+        if data and 'tagged_users' in data:
+            usernames = [u.get('username') for u in data['tagged_users'] if u.get('username')]
+            if usernames:
+                api_logger.info(f"Story {story_id} má {len(usernames)} tagged users")
+            return usernames
+
+        # Tagged users field není dostupný (App Review needed)
         return []
 
     def get_story_details_with_tags(self, story_id: str) -> Optional[Dict]:
@@ -267,6 +314,40 @@ class MetaAPIClient:
         except Exception as e:
             api_logger.error(f"Story details exception: {str(e)}")
 
+        return None
+
+    def get_media_details_by_id(self, media_id: str) -> Optional[Dict]:
+        """
+        Získá detailní informace o media podle ID (pro webhook processing)
+
+        Používá se když dostaneme webhook notifikaci s media_id
+        a potřebujeme získat kompletní data včetně username autora.
+
+        Args:
+            media_id: ID media z webhook notifikace nebo API
+
+        Returns:
+            Kompletní media data včetně username, insights, atd. nebo None při chybě
+        """
+        url = f"{self.base_url}/{media_id}"
+        params = {
+            'fields': 'id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count,username,owner'
+        }
+
+        api_logger.info(f"Načítám detaily media {media_id}...")
+        data = self._make_request(url, params)
+
+        if data:
+            # Pokus o získání insights (ne vždy dostupné)
+            insights = self.get_instagram_insights(media_id)
+            if insights:
+                data['reach'] = insights.get('reach', 0)
+                data['impressions'] = insights.get('impressions', 0)
+
+            api_logger.info(f"Media {media_id} načteno (autor: {data.get('username', 'N/A')})")
+            return data
+
+        api_logger.warning(f"Nepodařilo se načíst media {media_id}")
         return None
 
     def get_instagram_insights(self, media_id: str) -> Optional[Dict]:
