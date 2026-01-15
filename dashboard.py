@@ -107,6 +107,7 @@ sys.path.append(str(Path(__file__).parent))
 from src.database.postgres_manager import UniversalDatabaseManager
 from src.utils.config import Config
 from src.reporting.excel_report import ExcelReporter
+from src.utils.startup_sync import run_startup_sync
 import streamlit.components.v1 as components
 import json
 
@@ -469,6 +470,16 @@ st.markdown(f'<style data-version="{css_version}">' + """
     }
 </style>""", unsafe_allow_html=True)
 
+# Run startup sync ONCE on application load
+@st.cache_resource
+def initialize_app():
+    """Initialize application and sync data on startup"""
+    sync_result = run_startup_sync()
+    return sync_result
+
+# Perform initialization
+init_result = initialize_app()
+
 # Inicializace databáze
 @st.cache_resource
 def get_db():
@@ -578,6 +589,24 @@ with st.sidebar:
 
             except Exception as e:
                 st.error(f"❌ Chyba při synchronizaci: {str(e)}")
+
+    # Manual Google Sheets Sync
+    if st.button("🔄 Sync Google Sheets", use_container_width=True):
+        with st.spinner("Synchronizing from Google Sheets..."):
+            try:
+                from src.utils.google_sheets_loader import GoogleSheetsLoader
+                sheets_loader = GoogleSheetsLoader()
+                db.connect()
+                stats = sheets_loader.sync_to_database(db)
+                db.close()
+
+                st.success(f"✅ Sync complete!")
+                st.info(f"Added: {stats['added']} | Updated: {stats['updated']}")
+                st.cache_data.clear()
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Sync failed: {str(e)}")
 
     st.markdown("---")
 

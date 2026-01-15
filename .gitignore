@@ -32,6 +32,12 @@ config/.env
 .streamlit/secrets.toml
 secrets.toml
 
+# Google Service Account credentials
+config/service_account.json
+service_account.json
+**/service_account.json
+credentials.json
+
 # Data a databáze
 data/
 *.db

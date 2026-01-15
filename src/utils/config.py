@@ -74,6 +74,13 @@ class Config:
     # Influencer Master file
     INFLUENCERS_FILE = BASE_DIR / 'Influencer boss' / 'influencers_master.xlsx'
 
+    # Google Sheets Configuration
+    GOOGLE_SHEETS_ENABLED = get_config_value('GOOGLE_SHEETS_ENABLED', 'true').lower() == 'true'
+    GOOGLE_SHEETS_SHEET_ID = get_config_value('GOOGLE_SHEETS_SHEET_ID', '')
+    GOOGLE_SHEETS_CREDENTIALS_JSON = get_config_value('GOOGLE_SHEETS_CREDENTIALS_JSON', '')
+    GOOGLE_SHEETS_WORKSHEET_NAME = get_config_value('GOOGLE_SHEETS_WORKSHEET_NAME', 'Aktivní influenceři')
+    SERVICE_ACCOUNT_FILE = CONFIG_DIR / 'service_account.json'
+
     # Databáze
     DATABASE_PATH = DATA_DIR / 'influencer_monitor.db'
 
