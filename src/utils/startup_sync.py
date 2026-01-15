@@ -39,24 +39,37 @@ def run_startup_sync():
     if Config.GOOGLE_SHEETS_ENABLED:
         main_logger.info("📊 Attempting Google Sheets sync...")
         try:
+            import signal
             from src.utils.google_sheets_loader import GoogleSheetsLoader
 
-            sheets_loader = GoogleSheetsLoader()
-            stats = sheets_loader.sync_to_database(db)
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Google Sheets sync timed out after 30 seconds")
 
-            main_logger.info("=" * 60)
-            main_logger.info(f"✅ Google Sheets sync successful!")
-            main_logger.info(f"   Added: {stats['added']} influencers")
-            main_logger.info(f"   Updated: {stats['updated']} influencers")
-            main_logger.info("=" * 60)
+            # Set timeout for Google Sheets sync (30 seconds)
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(30)
 
-            return {
-                'success': True,
-                'source': 'google_sheets',
-                'added': stats['added'],
-                'updated': stats['updated'],
-                'error': None
-            }
+            try:
+                sheets_loader = GoogleSheetsLoader()
+                stats = sheets_loader.sync_to_database(db)
+                signal.alarm(0)  # Cancel timeout
+
+                main_logger.info("=" * 60)
+                main_logger.info(f"✅ Google Sheets sync successful!")
+                main_logger.info(f"   Added: {stats['added']} influencers")
+                main_logger.info(f"   Updated: {stats['updated']} influencers")
+                main_logger.info("=" * 60)
+
+                return {
+                    'success': True,
+                    'source': 'google_sheets',
+                    'added': stats['added'],
+                    'updated': stats['updated'],
+                    'error': None
+                }
+            except TimeoutError as e:
+                signal.alarm(0)  # Cancel timeout
+                raise e
 
         except Exception as e:
             main_logger.warning(f"⚠️  Google Sheets sync failed: {str(e)}")
