@@ -472,14 +472,9 @@ st.markdown(f'<style data-version="{css_version}">' + """
 # Inicializace databáze
 @st.cache_resource
 def get_db():
-    print("DEBUG: Initializing UniversalDatabaseManager...")
-    db = UniversalDatabaseManager()
-    print(f"DEBUG: Database initialized. Type: {'PostgreSQL' if db.is_postgres else 'SQLite'}")
-    return db
+    return UniversalDatabaseManager()
 
-print("DEBUG: About to call get_db()")
 db = get_db()
-print("DEBUG: get_db() completed successfully")
 
 # Hlavní nadpis - bez emoji, podle brandbooku
 st.markdown('<div class="main-header">AMITY DRINKS</div>', unsafe_allow_html=True)

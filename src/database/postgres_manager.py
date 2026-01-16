@@ -32,7 +32,20 @@ class UniversalDatabaseManager:
             self.db_path = Config.DATABASE_PATH
 
         self.connection = None
-        self._ensure_database_exists()
+
+        # Try to initialize database with fallback to SQLite on error
+        try:
+            self._ensure_database_exists()
+        except Exception as e:
+            if self.is_postgres:
+                # PostgreSQL failed, fallback to SQLite
+                print(f"WARNING: PostgreSQL connection failed ({str(e)}), falling back to SQLite")
+                self.is_postgres = False
+                self.db_path = Config.DATABASE_PATH
+                self.database_url = None
+                self._ensure_database_exists()
+            else:
+                raise
 
     def _ensure_database_exists(self):
         """Vytvoří databázi a tabulky, pokud neexistují"""
@@ -47,10 +60,11 @@ class UniversalDatabaseManager:
         """Připojení k databázi"""
         if self.connection is None:
             if self.is_postgres:
-                # PostgreSQL
+                # PostgreSQL with timeout
                 self.connection = psycopg2.connect(
                     self.database_url,
-                    cursor_factory=psycopg2.extras.RealDictCursor
+                    cursor_factory=psycopg2.extras.RealDictCursor,
+                    connect_timeout=10  # 10 second timeout
                 )
             else:
                 # SQLite
