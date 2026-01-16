@@ -487,7 +487,7 @@ with st.sidebar:
 
     # Zobrazit logo jen pokud existuje
     if logo_path.exists():
-        st.image(str(logo_path), use_column_width=True)
+        st.image(str(logo_path), use_container_width=True)
     else:
         # Fallback - ikona místo loga
         st.markdown('<div style="text-align: center; font-size: 4rem;">🍹</div>', unsafe_allow_html=True)
