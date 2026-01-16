@@ -107,7 +107,6 @@ sys.path.append(str(Path(__file__).parent))
 from src.database.postgres_manager import UniversalDatabaseManager
 from src.utils.config import Config
 from src.reporting.excel_report import ExcelReporter
-from src.utils.startup_sync import run_startup_sync
 import streamlit.components.v1 as components
 import json
 
@@ -477,43 +476,6 @@ def get_db():
 
 db = get_db()
 
-# Background data sync - runs ONCE per session without blocking UI
-@st.cache_resource
-def get_sync_status():
-    """Returns a dict that holds sync status - shared across reruns"""
-    return {
-        'running': False,
-        'completed': False,
-        'result': None,
-        'thread': None
-    }
-
-sync_status = get_sync_status()
-
-# Start background sync if not already running
-if not sync_status['completed'] and not sync_status['running']:
-    import threading
-
-    def background_sync():
-        sync_status['running'] = True
-        try:
-            result = run_startup_sync()
-            sync_status['result'] = result
-        except Exception as e:
-            sync_status['result'] = {
-                'success': False,
-                'source': 'none',
-                'error': str(e)
-            }
-        finally:
-            sync_status['running'] = False
-            sync_status['completed'] = True
-
-    # Start sync in background thread (non-blocking)
-    sync_thread = threading.Thread(target=background_sync, daemon=True)
-    sync_thread.start()
-    sync_status['thread'] = sync_thread
-
 # Hlavní nadpis - bez emoji, podle brandbooku
 st.markdown('<div class="main-header">AMITY DRINKS</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">social hero</div>', unsafe_allow_html=True)
@@ -536,31 +498,6 @@ with st.sidebar:
             <div style='font-size: 1.7rem; color: #666666; margin-top: 0.5rem; font-weight: 700;'>social hero</div>
         </div>
     """, unsafe_allow_html=True)
-
-    # Data sync status indicator
-    if sync_status['running']:
-        st.info("🔄 Synchronizace dat...", icon="ℹ️")
-    elif sync_status['completed'] and sync_status['result']:
-        result = sync_status['result']
-        if result['success']:
-            source_emoji = {
-                'google_sheets': '📊',
-                'excel': '📁',
-                'database': '💾'
-            }.get(result['source'], '✅')
-
-            source_name = {
-                'google_sheets': 'Google Sheets',
-                'excel': 'Excel',
-                'database': 'Databáze'
-            }.get(result['source'], result['source'])
-
-            if result['added'] > 0 or result['updated'] > 0:
-                st.success(f"{source_emoji} Data z: {source_name}\n\n+{result['added']} | ~{result['updated']}", icon="✅")
-            else:
-                st.success(f"{source_emoji} Data z: {source_name}", icon="✅")
-        else:
-            st.warning(f"⚠️ Sync selhal, používám databázi", icon="⚠️")
 
     st.markdown("---")
 
