@@ -70,7 +70,21 @@ class UniversalDatabaseManager:
                 # SQLite
                 self.connection = sqlite3.connect(str(self.db_path))
                 self.connection.row_factory = sqlite3.Row
+        elif self.is_postgres and self.connection:
+            # Reset connection if in error state
+            try:
+                self.connection.rollback()
+            except:
+                pass
         return self.connection
+
+    def rollback(self):
+        """Rollback current transaction"""
+        if self.connection:
+            try:
+                self.connection.rollback()
+            except:
+                pass
 
     def close(self):
         """Uzavření připojení"""

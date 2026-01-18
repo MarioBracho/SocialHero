@@ -229,31 +229,44 @@ class GoogleSheetsLoader:
             main_logger.warning("Žádní influenceři k synchronizaci z Google Sheets")
             return {'added': 0, 'updated': 0}
 
-        db_manager.connect()
+        try:
+            db_manager.connect()
 
-        # Get existing influencers from DB
-        existing = {inf['instagram_handle']: inf for inf in db_manager.get_all_influencers(active_only=False)}
+            # Get existing influencers from DB
+            existing = {inf['instagram_handle']: inf for inf in db_manager.get_all_influencers(active_only=False)}
 
-        added = 0
-        updated = 0
+            added = 0
+            updated = 0
 
-        for inf in influencers:
-            ig_handle = inf.get('instagram_handle')
+            for inf in influencers:
+                ig_handle = inf.get('instagram_handle')
 
-            if not ig_handle:
-                continue
+                if not ig_handle:
+                    continue
 
-            if ig_handle in existing:
-                # Update existing
-                db_inf = existing[ig_handle]
-                db_manager.update_influencer(db_inf['id'], inf)
-                updated += 1
-            else:
-                # Add new
-                db_manager.add_influencer(inf)
-                added += 1
+                if ig_handle in existing:
+                    # Update existing
+                    db_inf = existing[ig_handle]
+                    db_manager.update_influencer(db_inf['id'], inf)
+                    updated += 1
+                else:
+                    # Add new
+                    db_manager.add_influencer(inf)
+                    added += 1
 
-        db_manager.close()
+            # Commit changes
+            if hasattr(db_manager, 'connection') and db_manager.connection:
+                db_manager.connection.commit()
 
-        main_logger.info(f"✅ Google Sheets sync completed: {added} added, {updated} updated")
-        return {'added': added, 'updated': updated}
+            main_logger.info(f"✅ Google Sheets sync completed: {added} added, {updated} updated")
+            return {'added': added, 'updated': updated}
+
+        except Exception as e:
+            # Rollback on error
+            if hasattr(db_manager, 'rollback'):
+                db_manager.rollback()
+            main_logger.error(f"❌ Google Sheets sync failed: {str(e)}")
+            raise
+
+        finally:
+            db_manager.close()
