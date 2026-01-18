@@ -1019,6 +1019,37 @@ Systém automaticky přiřadí příspěvek!
 
     st.markdown("---")
 
+    # Google Sheets Sync
+    st.markdown("### 📊 Synchronizace dat")
+
+    if st.button("🔄 Sync z Google Sheets", use_container_width=True, key="sync_sheets_btn", help="Načte nejnovější data z Google Sheets"):
+        if Config.GOOGLE_SHEETS_ENABLED:
+            with st.spinner("Synchronizuji data z Google Sheets..."):
+                try:
+                    from src.utils.google_sheets_loader import GoogleSheetsLoader
+
+                    sheets_loader = GoogleSheetsLoader()
+                    db.connect()
+                    stats = sheets_loader.sync_to_database(db)
+                    db.close()
+
+                    if stats['added'] > 0 or stats['updated'] > 0:
+                        st.success(f"✅ Synchronizace dokončena!\n\n➕ Přidáno: {stats['added']}\n🔄 Aktualizováno: {stats['updated']}")
+                    else:
+                        st.info("ℹ️ Data jsou aktuální, žádné změny.")
+
+                    # Clear cache and reload data
+                    st.cache_data.clear()
+                    time.sleep(1)
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ Chyba při synchronizaci:\n\n{str(e)}")
+        else:
+            st.warning("⚠️ Google Sheets sync je vypnutý. Zapni GOOGLE_SHEETS_ENABLED v nastavení.")
+
+    st.markdown("---")
+
     # Logout tlačítko
     if st.button("🚪 Odhlásit se", use_container_width=True, key="logout_btn"):
         st.session_state.authenticated = False
