@@ -1213,9 +1213,10 @@ if monthly_stats:
             ]}
         ])
 
-    # Formátování hodnot pro statickou tabulku
-    display_df['% Plnění'] = display_df['% Plnění'].apply(lambda x: f"{int(x)}%")
-    display_df['Reach'] = display_df['Reach'].apply(lambda x: f"{int(x):,}".replace(',', ' '))
+    # Formátování hodnot pro statickou tabulku (ošetření infinity a NaN)
+    import math
+    display_df['% Plnění'] = display_df['% Plnění'].apply(lambda x: f"{int(x)}%" if math.isfinite(x) else "100%")
+    display_df['Reach'] = display_df['Reach'].apply(lambda x: f"{int(x):,}".replace(',', ' ') if math.isfinite(x) else "0")
 
     # Zobrazení stylované tabulky pomocí st.table (podporuje CSS hover)
     styled_df = style_dataframe(display_df)
