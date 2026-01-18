@@ -168,7 +168,7 @@ class GoogleSheetsLoader:
                     'email': str(get_col(row, 'Email', 'E-mail')).strip(),
                     'datum_zacatku': datum,
                     'poznamky': str(get_col(row, 'Poznámky', 'poznamky', 'Notes')).strip(),
-                    'aktivni': str(get_col(row, 'Status', 'status', 'Stav', 'stav') or 'Aktivní').strip().lower().replace('*', '') == 'aktivní'
+                    'aktivni': 'ano' if str(get_col(row, 'Status', 'status', 'Stav', 'stav') or 'Aktivní').strip().lower().replace('*', '') == 'aktivní' else 'ne'
                 }
 
                 influencers.append(influencer)
