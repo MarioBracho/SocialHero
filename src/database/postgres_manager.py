@@ -445,14 +445,26 @@ class UniversalDatabaseManager:
         cursor = self.connection.cursor()
         placeholder = '%s' if self.is_postgres else '?'
 
-        cursor.execute(f'''
-            SELECT p.*, i.jmeno as influencer_name
-            FROM posts p
-            JOIN influencers i ON p.influencer_id = i.id
-            WHERE strftime('%Y', p.timestamp) = {placeholder}
-            AND strftime('%m', p.timestamp) = {placeholder}
-            ORDER BY p.timestamp DESC
-        ''', (str(year), f"{month:02d}"))
+        if self.is_postgres:
+            # PostgreSQL syntax
+            cursor.execute(f'''
+                SELECT p.*, i.jmeno as influencer_name
+                FROM posts p
+                JOIN influencers i ON p.influencer_id = i.id
+                WHERE EXTRACT(YEAR FROM p.timestamp::timestamp) = {placeholder}
+                AND EXTRACT(MONTH FROM p.timestamp::timestamp) = {placeholder}
+                ORDER BY p.timestamp DESC
+            ''', (year, month))
+        else:
+            # SQLite syntax
+            cursor.execute(f'''
+                SELECT p.*, i.jmeno as influencer_name
+                FROM posts p
+                JOIN influencers i ON p.influencer_id = i.id
+                WHERE strftime('%Y', p.timestamp) = {placeholder}
+                AND strftime('%m', p.timestamp) = {placeholder}
+                ORDER BY p.timestamp DESC
+            ''', (str(year), f"{month:02d}"))
 
         return [dict(row) for row in cursor.fetchall()]
 
@@ -464,18 +476,32 @@ class UniversalDatabaseManager:
         placeholder = '%s' if self.is_postgres else '?'
 
         # Spočítat statistiky z příspěvků
-        cursor.execute(f'''
-            SELECT
-                COUNT(CASE WHEN post_type = 'story' THEN 1 END) as stories_count,
-                COUNT(CASE WHEN post_type = 'post' THEN 1 END) as posts_count,
-                COUNT(CASE WHEN post_type = 'reel' THEN 1 END) as reels_count,
-                COALESCE(SUM(reach), 0) as total_reach,
-                COALESCE(SUM(likes + comments), 0) as total_engagement
-            FROM posts
-            WHERE influencer_id = {placeholder}
-            AND strftime('%Y', timestamp) = {placeholder}
-            AND strftime('%m', timestamp) = {placeholder}
-        ''', (influencer_id, str(year), f"{month:02d}"))
+        if self.is_postgres:
+            cursor.execute(f'''
+                SELECT
+                    COUNT(CASE WHEN post_type = 'story' THEN 1 END) as stories_count,
+                    COUNT(CASE WHEN post_type = 'post' THEN 1 END) as posts_count,
+                    COUNT(CASE WHEN post_type = 'reel' THEN 1 END) as reels_count,
+                    COALESCE(SUM(reach), 0) as total_reach,
+                    COALESCE(SUM(likes + comments), 0) as total_engagement
+                FROM posts
+                WHERE influencer_id = {placeholder}
+                AND EXTRACT(YEAR FROM timestamp::timestamp) = {placeholder}
+                AND EXTRACT(MONTH FROM timestamp::timestamp) = {placeholder}
+            ''', (influencer_id, year, month))
+        else:
+            cursor.execute(f'''
+                SELECT
+                    COUNT(CASE WHEN post_type = 'story' THEN 1 END) as stories_count,
+                    COUNT(CASE WHEN post_type = 'post' THEN 1 END) as posts_count,
+                    COUNT(CASE WHEN post_type = 'reel' THEN 1 END) as reels_count,
+                    COALESCE(SUM(reach), 0) as total_reach,
+                    COALESCE(SUM(likes + comments), 0) as total_engagement
+                FROM posts
+                WHERE influencer_id = {placeholder}
+                AND strftime('%Y', timestamp) = {placeholder}
+                AND strftime('%m', timestamp) = {placeholder}
+            ''', (influencer_id, str(year), f"{month:02d}"))
 
         stats = dict(cursor.fetchone())
 
