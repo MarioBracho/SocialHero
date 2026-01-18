@@ -538,7 +538,7 @@ class UniversalDatabaseManager:
                 COALESCE(m.reels_count, 0) as reels_count,
                 COALESCE(m.total_reach, 0) as total_reach,
                 COALESCE(m.total_engagement, 0) as total_engagement,
-                COALESCE(m.target_met, 0) as target_met
+                COALESCE(m.target_met, false) as target_met
             FROM influencers i
             LEFT JOIN monthly_stats m ON i.id = m.influencer_id
                 AND m.year = {placeholder} AND m.month = {placeholder}
