@@ -1437,7 +1437,8 @@ if posts:
         with st.expander(f"📂 Zobrazit příspěvky ({len(inf_posts)})", expanded=False):
             for idx, post in enumerate(inf_posts):
                 # Post karta
-                post_date = post.get('timestamp', 'N/A')[:10] if post.get('timestamp') else 'N/A'
+                timestamp = post.get('timestamp')
+                post_date = str(timestamp)[:10] if timestamp else 'N/A'
                 post_type_emoji = {
                     'story': '📸',
                     'post': '📷',
