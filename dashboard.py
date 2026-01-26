@@ -1745,73 +1745,7 @@ if posts:
 
     # Zobrazení influencerů a jejich příspěvků
     for inf_name, inf_posts in filtered_influencers.items():
-        # Počet příspěvků podle typu
-        stories_count = sum(1 for p in inf_posts if p['post_type'] == 'story')
-        posts_count = sum(1 for p in inf_posts if p['post_type'] == 'post')
-        reels_count = sum(1 for p in inf_posts if p['post_type'] == 'reel')
-
-        # Celkový reach
-        total_reach = sum(p.get('reach', 0) for p in inf_posts)
-
-        # Influencer karta - moderní Chakra UI styl
-        st.markdown(f"""
-            <div style='background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
-                        border-radius: 16px;
-                        padding: 1.5rem;
-                        margin-bottom: 1.5rem;
-                        border: 2px solid #E8E8E8;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                        transition: all 0.3s ease;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;'>
-                    <div style='display: flex; align-items: center; gap: 1rem;'>
-                        <div style='width: 48px;
-                                    height: 48px;
-                                    border-radius: 50%;
-                                    background: linear-gradient(135deg, #C8A43B 0%, #B39435 100%);
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    font-size: 1.5rem;
-                                    font-weight: 700;
-                                    color: #FFFFFF;
-                                    box-shadow: 0 2px 8px rgba(200, 164, 59, 0.3);'>
-                            {inf_name[0].upper()}
-                        </div>
-                        <div>
-                            <div style='font-size: 1.3rem;
-                                        font-weight: 700;
-                                        color: #000000;
-                                        margin-bottom: 0.25rem;'>
-                                {inf_name}
-                            </div>
-                            <div style='font-size: 0.85rem; color: #666666;'>
-                                {len(inf_posts)} příspěvků celkem
-                            </div>
-                        </div>
-                    </div>
-                    <div style='display: flex; gap: 1rem; align-items: center;'>
-                        <div style='text-align: center; padding: 0.5rem 1rem; background: #FFFFFF; border-radius: 8px; border: 1px solid #E8E8E8;'>
-                            <div style='font-size: 0.7rem; color: #666666; text-transform: uppercase; letter-spacing: 0.5px;'>Stories</div>
-                            <div style='font-size: 1.2rem; font-weight: 700; color: #C8A43B;'>{stories_count}</div>
-                        </div>
-                        <div style='text-align: center; padding: 0.5rem 1rem; background: #FFFFFF; border-radius: 8px; border: 1px solid #E8E8E8;'>
-                            <div style='font-size: 0.7rem; color: #666666; text-transform: uppercase; letter-spacing: 0.5px;'>Posts</div>
-                            <div style='font-size: 1.2rem; font-weight: 700; color: #C8A43B;'>{posts_count}</div>
-                        </div>
-                        <div style='text-align: center; padding: 0.5rem 1rem; background: #FFFFFF; border-radius: 8px; border: 1px solid #E8E8E8;'>
-                            <div style='font-size: 0.7rem; color: #666666; text-transform: uppercase; letter-spacing: 0.5px;'>Reels</div>
-                            <div style='font-size: 1.2rem; font-weight: 700; color: #C8A43B;'>{reels_count}</div>
-                        </div>
-                        <div style='text-align: center; padding: 0.5rem 1rem; background: #FFFFFF; border-radius: 8px; border: 1px solid #E8E8E8;'>
-                            <div style='font-size: 0.7rem; color: #666666; text-transform: uppercase; letter-spacing: 0.5px;'>Reach</div>
-                            <div style='font-size: 1.2rem; font-weight: 700; color: #000000;'>{total_reach:,}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Rozbalovací menu s příspěvky
+        # Rozbalovací menu s příspěvky (bez karty - info je v tabulce Stav Plnění)
         with st.expander(f"📂 Zobrazit příspěvky ({len(inf_posts)})", expanded=False):
             for idx, post in enumerate(inf_posts):
                 # Post karta
