@@ -473,17 +473,58 @@ st.markdown(f'<style data-version="{css_version}">' + """
         background: #B39435;
     }
 
+    /* ===========================================
+       SIDEBAR TOGGLE BUTTON - Zvýraznění
+       =========================================== */
+
+    /* Stylování sidebar collapse/expand tlačítka */
+    button[data-testid="stSidebarCollapseButton"],
+    button[data-testid="baseButton-headerNoPadding"],
+    [data-testid="collapsedControl"] {
+        background: linear-gradient(135deg, #C8A43B 0%, #B39435 100%) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        box-shadow: 0 2px 10px rgba(200, 164, 59, 0.4) !important;
+        transition: all 0.3s ease !important;
+        margin: 8px !important;
+    }
+
+    button[data-testid="stSidebarCollapseButton"]:hover,
+    button[data-testid="baseButton-headerNoPadding"]:hover,
+    [data-testid="collapsedControl"]:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 4px 15px rgba(200, 164, 59, 0.5) !important;
+    }
+
+    button[data-testid="stSidebarCollapseButton"] svg,
+    button[data-testid="baseButton-headerNoPadding"] svg,
+    [data-testid="collapsedControl"] svg {
+        fill: #000000 !important;
+        color: #000000 !important;
+        width: 24px !important;
+        height: 24px !important;
+    }
+
     /* Skrýt fullscreen tlačítko u obrázků */
     button[title="View fullscreen"] {
         display: none !important;
     }
 
-    /* Skrýt horní Streamlit toolbar */
+    /* Streamlit toolbar - ZOBRAZIT pro přístup k menu */
     header[data-testid="stHeader"] {
-        display: none !important;
+        display: flex !important;
+        visibility: visible !important;
+        background: #FFFFFF !important;
+        border-bottom: 1px solid #E8E8E8 !important;
+        height: auto !important;
+        min-height: 50px !important;
     }
 
-    /* Upravit padding hlavního containeru bez headeru */
+    /* Upravit padding hlavního containeru */
     .main .block-container {
         padding-top: 1rem !important;
     }
@@ -786,82 +827,6 @@ db = get_db()
 st.markdown('<div class="main-header">AMITY DRINKS</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">social hero</div>', unsafe_allow_html=True)
 
-# Tlačítko pro otevření sidebaru (funguje na všech zařízeních)
-# Používá Streamlit components pro přístup k parent frame
-components.html("""
-    <style>
-        .sidebar-toggle-btn {
-            position: fixed;
-            top: 70px;
-            left: 10px;
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, #C8A43B 0%, #B39435 100%);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 999999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(200, 164, 59, 0.4);
-            transition: all 0.3s ease;
-        }
-        .sidebar-toggle-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(200, 164, 59, 0.5);
-        }
-        .sidebar-toggle-btn:active {
-            transform: scale(0.95);
-        }
-        .sidebar-toggle-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: #000;
-        }
-    </style>
-    <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Menu">
-        <svg viewBox="0 0 24 24">
-            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-        </svg>
-    </button>
-    <script>
-        function toggleSidebar() {
-            // Přístup k parent window (Streamlit app)
-            const parent = window.parent.document;
-
-            // Zkusit najít tlačítko pro otevření sidebaru (když je zavřený)
-            let btn = parent.querySelector('button[data-testid="baseButton-headerNoPadding"]');
-            if (btn) {
-                btn.click();
-                return;
-            }
-
-            // Zkusit najít collapsed control
-            btn = parent.querySelector('[data-testid="collapsedControl"]');
-            if (btn) {
-                btn.click();
-                return;
-            }
-
-            // Zkusit kliknout na stExpanderToggleIcon
-            btn = parent.querySelector('[data-testid="stSidebarNavCollapseIcon"]');
-            if (btn) {
-                btn.click();
-                return;
-            }
-
-            // Fallback - simulovat kliknutí na sidebar header
-            const sidebar = parent.querySelector('[data-testid="stSidebar"]');
-            if (sidebar) {
-                const closeBtn = sidebar.querySelector('button');
-                if (closeBtn) {
-                    closeBtn.click();
-                }
-            }
-        }
-    </script>
-""", height=0)
 
 # Sidebar - s Amity logem
 with st.sidebar:
