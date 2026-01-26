@@ -41,11 +41,59 @@ def check_password():
             correct_username = "amity"
             correct_password = "demo123"
 
-    # Přihlašovací formulář
+    # Přihlašovací formulář - responzivní CSS
     st.markdown("""
         <style>
             .stApp {
                 background: linear-gradient(135deg, #F5F0E8 0%, #E8DCC8 100%);
+            }
+            .login-container {
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            .login-emoji {
+                font-size: 4rem;
+                margin-bottom: 1rem;
+            }
+            .login-title {
+                color: #C8A43B;
+                margin: 0;
+                font-size: 2.5rem;
+            }
+            .login-subtitle {
+                color: #666;
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-top: 0.5rem;
+            }
+            .login-hint {
+                color: #999;
+                font-size: 0.9rem;
+            }
+            @media screen and (max-width: 768px) {
+                .login-emoji {
+                    font-size: 3rem;
+                }
+                .login-title {
+                    font-size: 1.8rem;
+                }
+                .login-subtitle {
+                    font-size: 1.3rem;
+                }
+                .login-hint {
+                    font-size: 0.85rem;
+                }
+            }
+            @media screen and (max-width: 480px) {
+                .login-emoji {
+                    font-size: 2.5rem;
+                }
+                .login-title {
+                    font-size: 1.5rem;
+                }
+                .login-subtitle {
+                    font-size: 1.1rem;
+                }
             }
         </style>
     """, unsafe_allow_html=True)
@@ -54,14 +102,14 @@ def check_password():
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
 
         st.markdown("""
-            <div style='text-align: center; margin-bottom: 2rem;'>
-                <div style='font-size: 4rem; margin-bottom: 1rem;'>🍹</div>
-                <h1 style='color: #C8A43B; margin: 0; font-size: 2.5rem;'>AMITY DRINKS</h1>
-                <p style='color: #666; font-size: 1.8rem; font-weight: 700; margin-top: 0.5rem;'>social hero</p>
-                <p style='color: #999; font-size: 0.9rem;'>Přihlaste se pro přístup k dashboardu</p>
+            <div class='login-container'>
+                <div class='login-emoji'>🍹</div>
+                <h1 class='login-title'>AMITY DRINKS</h1>
+                <p class='login-subtitle'>social hero</p>
+                <p class='login-hint'>Přihlaste se pro přístup k dashboardu</p>
             </div>
         """, unsafe_allow_html=True)
 
@@ -109,6 +157,11 @@ from src.utils.config import Config
 from src.reporting.excel_report import ExcelReporter
 import streamlit.components.v1 as components
 import json
+
+# Viewport meta tag pro správné mobilní zobrazení
+st.markdown("""
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+""", unsafe_allow_html=True)
 
 # Custom CSS - Amity Brand Design (with cache buster)
 css_version = int(time.time())
@@ -466,6 +519,259 @@ st.markdown(f'<style data-version="{css_version}">' + """
     .stNumberInput label {
         color: #000000 !important;
         font-weight: 500 !important;
+    }
+
+    /* ===========================================
+       RESPONZIVNÍ DESIGN - MEDIA QUERIES
+       =========================================== */
+
+    /* Desktop/Mobile only třídy */
+    .desktop-only {
+        display: block;
+    }
+
+    .mobile-only {
+        display: none;
+    }
+
+    /* Tablet (max 1024px) */
+    @media screen and (max-width: 1024px) {
+        .main-header {
+            font-size: 2.2rem !important;
+        }
+
+        .subtitle {
+            font-size: 1.6rem !important;
+        }
+
+        div[data-testid="stMetricValue"] {
+            font-size: 2rem !important;
+        }
+
+        .main .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        h2 {
+            font-size: 1.5rem !important;
+        }
+
+        /* Karty - menší padding */
+        .glass-card {
+            padding: 1.5rem !important;
+        }
+    }
+
+    /* Mobil (max 768px) */
+    @media screen and (max-width: 768px) {
+        /* Přepínání desktop/mobile elementů */
+        .desktop-only {
+            display: none !important;
+        }
+
+        .mobile-only {
+            display: block !important;
+        }
+
+        /* Hlavní nadpisy */
+        .main-header {
+            font-size: 1.6rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .subtitle {
+            font-size: 1.2rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        /* Metriky - menší na mobilu */
+        div[data-testid="stMetricValue"] {
+            font-size: 1.5rem !important;
+        }
+
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.75rem !important;
+        }
+
+        /* Hlavní kontejner - plná šířka */
+        .main .block-container {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            padding-top: 0.5rem !important;
+            max-width: 100% !important;
+        }
+
+        /* Sekční nadpisy */
+        h2 {
+            font-size: 1.3rem !important;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        h3 {
+            font-size: 1.1rem !important;
+        }
+
+        /* Karty - kompaktní */
+        .glass-card {
+            padding: 1rem !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* Sidebar na mobilu */
+        section[data-testid="stSidebar"] {
+            min-width: 280px !important;
+        }
+
+        section[data-testid="stSidebar"] > div {
+            padding: 1rem !important;
+        }
+
+        /* Tlačítka - větší dotyková plocha */
+        .stButton > button {
+            min-height: 48px !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Input pole - větší */
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        .stTextInput input,
+        .stTextArea textarea,
+        .stNumberInput input {
+            min-height: 44px !important;
+            font-size: 16px !important; /* Zabraňuje zoom na iOS */
+        }
+
+        /* Selectboxy - větší */
+        div[data-baseweb="select"] > div {
+            min-height: 44px !important;
+        }
+
+        /* Expander - větší klikací oblast */
+        div[data-testid="stExpander"] summary {
+            padding: 1rem !important;
+            min-height: 48px !important;
+        }
+
+        /* Tabulky - horizontální scroll */
+        div[data-testid="stDataFrame"] {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        div[data-testid="stDataFrame"] table {
+            font-size: 0.85rem !important;
+        }
+
+        /* Radio buttons - větší */
+        div[data-testid="stRadio"] label {
+            padding: 0.75rem !important;
+            min-height: 44px !important;
+        }
+
+        /* Checkboxy - větší */
+        div[data-testid="stCheckbox"] label {
+            padding: 0.5rem !important;
+            min-height: 44px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        /* Columns na mobilu - stack vertically */
+        div[data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+
+        /* Horizontální oddělovač */
+        hr {
+            margin: 1rem 0 !important;
+        }
+
+        /* Alert boxy */
+        div[data-testid="stAlert"] {
+            padding: 0.75rem !important;
+            font-size: 0.9rem !important;
+        }
+    }
+
+    /* Malý mobil (max 480px) */
+    @media screen and (max-width: 480px) {
+        .main-header {
+            font-size: 1.4rem !important;
+        }
+
+        .subtitle {
+            font-size: 1rem !important;
+        }
+
+        div[data-testid="stMetricValue"] {
+            font-size: 1.3rem !important;
+        }
+
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.7rem !important;
+        }
+
+        .glass-card {
+            padding: 0.75rem !important;
+        }
+
+        h2 {
+            font-size: 1.1rem !important;
+        }
+
+        /* Sidebar logo menší */
+        section[data-testid="stSidebar"] img {
+            max-width: 150px !important;
+            margin: 0 auto !important;
+        }
+    }
+
+    /* Touch-friendly hover efekty - odstranit na touch zařízeních */
+    @media (hover: none) and (pointer: coarse) {
+        .glass-card:hover {
+            transform: none !important;
+        }
+
+        .stButton > button:hover {
+            transform: none !important;
+        }
+
+        .stLinkButton > a:hover {
+            transform: none !important;
+        }
+    }
+
+    /* Landscape mobil */
+    @media screen and (max-width: 896px) and (orientation: landscape) {
+        .main .block-container {
+            padding-top: 0.5rem !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            max-width: 250px !important;
+        }
+    }
+
+    /* Print styly */
+    @media print {
+        section[data-testid="stSidebar"] {
+            display: none !important;
+        }
+
+        .stButton {
+            display: none !important;
+        }
+
+        .main .block-container {
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
     }
 </style>""", unsafe_allow_html=True)
 
@@ -1219,8 +1525,38 @@ if monthly_stats:
     display_df['Reach'] = display_df['Reach'].apply(lambda x: f"{int(x):,}".replace(',', ' ') if math.isfinite(x) else "0")
 
     # Zobrazení stylované tabulky pomocí st.table (podporuje CSS hover)
+    # Na desktopu - tabulka, na mobilu - karty (řízeno CSS)
+
+    # Desktop tabulka (skrytá na mobilu)
+    st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
     styled_df = style_dataframe(display_df)
     st.table(styled_df)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Mobilní karty (skryté na desktopu)
+    st.markdown('<div class="mobile-only">', unsafe_allow_html=True)
+    for _, row in display_df.iterrows():
+        status_color = "#4CAF50" if "Splněno" in str(row['Status']) else ("#FFC107" if "Riziko" in str(row['Status']) else "#F44336")
+        st.markdown(f"""
+            <div style='background: #FFFFFF; border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;
+                        border-left: 4px solid {status_color}; box-shadow: 0 2px 8px rgba(0,0,0,0.08);'>
+                <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;'>
+                    <span style='font-weight: 700; font-size: 1.1rem; color: #000;'>{row['Jméno']}</span>
+                    <span style='background: {status_color}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;'>
+                        {row['Status']}
+                    </span>
+                </div>
+                <div style='display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; font-size: 0.85rem;'>
+                    <div><span style='color: #666;'>📸 Stories:</span> <strong>{row['Stories']}</strong></div>
+                    <div><span style='color: #666;'>📷 Posty:</span> <strong>{row['Posty']}</strong></div>
+                    <div><span style='color: #666;'>🎬 Reels:</span> <strong>{row['Reels']}</strong></div>
+                    <div><span style='color: #666;'>📊 Celkem:</span> <strong>{row['Celkem']}</strong></div>
+                    <div><span style='color: #666;'>👁️ Reach:</span> <strong>{row['Reach']}</strong></div>
+                    <div><span style='color: #666;'>✅ Plnění:</span> <strong>{row['% Plnění']}</strong></div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # ===========================================
     # ŽEBŘÍČKY
