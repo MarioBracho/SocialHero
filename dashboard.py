@@ -786,6 +786,83 @@ db = get_db()
 st.markdown('<div class="main-header">AMITY DRINKS</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">social hero</div>', unsafe_allow_html=True)
 
+# Tlačítko pro otevření sidebaru (funguje na všech zařízeních)
+# Používá Streamlit components pro přístup k parent frame
+components.html("""
+    <style>
+        .sidebar-toggle-btn {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #C8A43B 0%, #B39435 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(200, 164, 59, 0.4);
+            transition: all 0.3s ease;
+        }
+        .sidebar-toggle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(200, 164, 59, 0.5);
+        }
+        .sidebar-toggle-btn:active {
+            transform: scale(0.95);
+        }
+        .sidebar-toggle-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #000;
+        }
+    </style>
+    <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Menu">
+        <svg viewBox="0 0 24 24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
+    </button>
+    <script>
+        function toggleSidebar() {
+            // Přístup k parent window (Streamlit app)
+            const parent = window.parent.document;
+
+            // Zkusit najít tlačítko pro otevření sidebaru (když je zavřený)
+            let btn = parent.querySelector('button[data-testid="baseButton-headerNoPadding"]');
+            if (btn) {
+                btn.click();
+                return;
+            }
+
+            // Zkusit najít collapsed control
+            btn = parent.querySelector('[data-testid="collapsedControl"]');
+            if (btn) {
+                btn.click();
+                return;
+            }
+
+            // Zkusit kliknout na stExpanderToggleIcon
+            btn = parent.querySelector('[data-testid="stSidebarNavCollapseIcon"]');
+            if (btn) {
+                btn.click();
+                return;
+            }
+
+            // Fallback - simulovat kliknutí na sidebar header
+            const sidebar = parent.querySelector('[data-testid="stSidebar"]');
+            if (sidebar) {
+                const closeBtn = sidebar.querySelector('button');
+                if (closeBtn) {
+                    closeBtn.click();
+                }
+            }
+        }
+    </script>
+""", height=0)
+
 # Sidebar - s Amity logem
 with st.sidebar:
     # Logo Amity - relativní cesta pro Streamlit Cloud
